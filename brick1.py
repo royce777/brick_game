@@ -80,29 +80,29 @@ class game_ball():
         self.ball = pygame.image.load('images/ball.png')
         self.ball = pygame.transform.scale(self.ball, (20, 20))
         self.radius = 10
-        print(x,y)
-        self.x = x - self.radius
-        self.y = y - self.radius
+        self.rect = self.ball.get_rect()
+        self.rect.x = x - self.radius
+        self.rect.y = y - self.radius
         self.speed = 10
         self.direction_x = 1
         self.direction_y = 1
     
     def move(self):
-        print(self.x, self.y)
-        if self.x > 0 and self.x < (WINDOW_WIDTH - self.ball.get_width()):
-            self.x += self.direction_x * self.speed
+        print(self.ball.get_rect().left)
+        if self.rect.x > 0 and self.rect.x < (WINDOW_WIDTH - self.ball.get_width()):
+            self.rect.x += self.direction_x * self.speed
             print('here i am')
         else:
             self.direction_x = -self.direction_x
-            self.x += self.direction_x * self.speed
-        if self.y > 0 and self.y < (WINDOW_HEIGHT - self.ball.get_height()):
-            self.y += self.direction_y * self.speed
+            self.rect.x += self.direction_x * self.speed
+        if self.rect.y > 0 and self.rect.y < (WINDOW_HEIGHT - self.ball.get_height()):
+            self.rect.y += self.direction_y * self.speed
         else:
             self.direction_y = -self.direction_y
-            self.y += self.direction_y * self.speed
+            self.rect.y += self.direction_y * self.speed
     
     def draw(self):
-        game_window.blit(self.ball, (self.x, self.y))
+        game_window.blit(self.ball, self.rect)
 
 
         
