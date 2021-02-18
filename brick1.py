@@ -75,20 +75,35 @@ class bar():
     def draw(self):
         game_window.blit(self.bar, (self.x,self.y))
 
-class ball():
+class game_ball():
     def __init__(self, x, y):
         self.ball = pygame.image.load('images/ball.png')
-        self.ball = pygame.transform.scale(ball, (20, 20))
+        self.ball = pygame.transform.scale(self.ball, (20, 20))
         self.radius = 10
+        print(x,y)
         self.x = x - self.radius
         self.y = y - self.radius
-        self.speed_x = 10
-        self.speed_y = 10
-        self.direction_x = 0
-        self.direction_y = 0
+        self.speed = 10
+        self.direction_x = 1
+        self.direction_y = 1
     
     def move(self):
-        
+        print(self.x, self.y)
+        if self.x > 0 and self.x < (WINDOW_WIDTH - self.ball.get_width()):
+            self.x += self.direction_x * self.speed
+            print('here i am')
+        else:
+            self.direction_x = -self.direction_x
+            self.x += self.direction_x * self.speed
+        if self.y > 0 and self.y < (WINDOW_HEIGHT - self.ball.get_height()):
+            self.y += self.direction_y * self.speed
+        else:
+            self.direction_y = -self.direction_y
+            self.y += self.direction_y * self.speed
+    
+    def draw(self):
+        game_window.blit(self.ball, (self.x, self.y))
+
 
         
 
@@ -100,6 +115,7 @@ def update():
 wall = brick_wall()
 wall.create_wall()
 bar = bar()
+ball = game_ball(int(WINDOW_WIDTH/2),bar.y)
 
 
 game_running = True
@@ -108,6 +124,8 @@ while game_running:
     wall.draw_wall()
     bar.draw()
     bar.move()
+    ball.draw()
+    ball.move()
     update()
     # Loop through all active events
     for event in pygame.event.get():
