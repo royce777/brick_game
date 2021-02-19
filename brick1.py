@@ -53,27 +53,28 @@ class brick_wall():
                 pygame.draw.rect(game_window, colour, block[0])
                 pygame.draw.rect(game_window, background, block[0], 2)
 
-class bar():
+class paddle():
     def __init__(self):
-        self.bar = pygame.image.load('images/bar.png')
-        self.bar = pygame.transform.scale(self.bar,(200,30))
-        self.x = int((WINDOW_WIDTH /2) - (self.bar.get_width()/2))
-        self.y =  WINDOW_HEIGHT - (self.bar.get_height() *2)
+        self.paddle = pygame.image.load('images/bar.png')
+        self.paddle = pygame.transform.scale(self.paddle,(200,30))
+        self.rect = self.paddle.get_rect()
+        self.rect.x = int((WINDOW_WIDTH /2) - (self.paddle.get_width()/2))
+        self.rect.y =  WINDOW_HEIGHT - (self.paddle.get_height() *2)
         self.speed = 7
         self.direction = 0
     
     def move(self):
         self.direction = 0
         key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT] and self.x > 0 :
+        if key[pygame.K_LEFT] and self.rect.x > 0 :
             self.direction = -1
-            self.x -= self.speed
-        if key[pygame.K_RIGHT] and self.x < (WINDOW_WIDTH-self.bar.get_width()) :
+            self.rect.x -= self.speed
+        if key[pygame.K_RIGHT] and self.rect.x < (WINDOW_WIDTH-self.paddle.get_width()) :
             self.direction = 1
-            self.x += self.speed 
+            self.rect.x += self.speed 
     
     def draw(self):
-        game_window.blit(self.bar, (self.x,self.y))
+        game_window.blit(self.paddle, self.rect)
 
 class game_ball():
     def __init__(self, x, y):
@@ -88,23 +89,40 @@ class game_ball():
         self.direction_y = 1
     
     def move(self):
-        print(self.ball.get_rect().left)
-        if self.rect.x > 0 and self.rect.x < (WINDOW_WIDTH - self.ball.get_width()):
-            self.rect.x += self.direction_x * self.speed
-            print('here i am')
-        else:
+        self.check_collisions(paddle.rect,wall.all_blocks)
+        if self.rect.x < 0 or self.rect.x > (WINDOW_WIDTH - self.ball.get_width()):
             self.direction_x = -self.direction_x
-            self.rect.x += self.direction_x * self.speed
-        if self.rect.y > 0 and self.rect.y < (WINDOW_HEIGHT - self.ball.get_height()):
-            self.rect.y += self.direction_y * self.speed
-        else:
+        if self.rect.y < 0 or self.rect.y > (WINDOW_HEIGHT - self.ball.get_height()):
             self.direction_y = -self.direction_y
-            self.rect.y += self.direction_y * self.speed
+        self.rect.x += self.direction_x * self.speed
+        self.rect.y += self.direction_y * self.speed
     
     def draw(self):
         game_window.blit(self.ball, self.rect)
-
-
+        
+    def check_collisions(self, paddle, blocks):
+        if self.rect.colliderect(paddle):
+            self.direction_y = -self.direction_y
+            #self.rect.y += self.direction_y * self.speed
+        collision_limit = 3
+        for row in blocks:
+            for block in row:
+                if self.rect.colliderect(block[0]):
+                    #detect from which direction the ball hits the brick
+                    if abs(self.rect.top - block[0].bottom) < collision_limit:
+                        self.direction_y = -self.direction_y
+                    if abs(self.rect.bottom - block[0].top) < collision_limit:
+                        self.direction_y = -self.direction_y
+                    if abs(self.rect.left - block[0].right) < collision_limit:
+                        self.direction_x = -self.direction_x
+                    if abs(self.rect.right - block[0].left) < collision_limit:
+                        self.direction_x = -self.direction_x
+                    print("Collision "+ str(self.direction_x) +" " +  str(self.direction_y))
+                    #decrement block's lives
+                    if block[1] > 1:
+                        block[1] -= 1
+                    else:
+                        block[0] = (0,0,0,0)
         
 
 
@@ -114,16 +132,16 @@ def update():
 
 wall = brick_wall()
 wall.create_wall()
-bar = bar()
-ball = game_ball(int(WINDOW_WIDTH/2),bar.y)
+paddle = paddle()
+ball = game_ball(int(WINDOW_WIDTH/2),paddle.rect.y)
 
 
 game_running = True
 while game_running:
     game_window.fill(background)
     wall.draw_wall()
-    bar.draw()
-    bar.move()
+    paddle.draw()
+    paddle.move()
     ball.draw()
     ball.move()
     update()
