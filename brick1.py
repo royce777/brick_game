@@ -84,9 +84,9 @@ class game_ball():
         self.rect = self.ball.get_rect()
         self.rect.x = x - self.radius
         self.rect.y = y - self.radius
-        self.speed = 10
+        self.speed = 5
         self.direction_x = 1
-        self.direction_y = 1
+        self.direction_y = -1
     
     def move(self):
         self.check_collisions(paddle.rect,wall.all_blocks)
@@ -104,7 +104,7 @@ class game_ball():
         if self.rect.colliderect(paddle):
             self.direction_y = -self.direction_y
             #self.rect.y += self.direction_y * self.speed
-        collision_limit = 3
+        collision_limit = 6
         for row in blocks:
             for block in row:
                 if self.rect.colliderect(block[0]):
@@ -117,11 +117,10 @@ class game_ball():
                         self.direction_x = -self.direction_x
                     if abs(self.rect.right - block[0].left) < collision_limit:
                         self.direction_x = -self.direction_x
-                    print("Collision "+ str(self.direction_x) +" " +  str(self.direction_y))
                     #decrement block's lives
                     if block[1] > 1:
                         block[1] -= 1
-                    else:
+                    if block[1] == 1:
                         block[0] = (0,0,0,0)
         
 
@@ -133,7 +132,7 @@ def update():
 wall = brick_wall()
 wall.create_wall()
 paddle = paddle()
-ball = game_ball(int(WINDOW_WIDTH/2),paddle.rect.y)
+ball = game_ball(int(WINDOW_WIDTH/2),paddle.rect.top)
 
 
 game_running = True
