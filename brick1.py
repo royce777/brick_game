@@ -14,9 +14,10 @@ game_window = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
 pygame.display.set_caption("Brick Smasher")
 
 FPS = 60
-
 columns = 8
 rows = 6
+ball_is_alive = False
+
 class brick_wall():
     def __init__(self):
         self.width = WINDOW_WIDTH // columns
@@ -78,12 +79,15 @@ class paddle():
 
 class game_ball():
     def __init__(self, x, y):
+        self.reset(x,y)
+
+    def reset(self, x, y):
         self.ball = pygame.image.load('images/ball.png')
-        self.ball = pygame.transform.scale(self.ball, (20, 20))
-        self.radius = 10
+        self.ball = pygame.transform.scale(self.ball, (10, 10))
+        self.radius = 5
         self.rect = self.ball.get_rect()
         self.rect.x = x - self.radius
-        self.rect.y = y - self.radius
+        self.rect.y = y - self.radius*2
         self.speed = 5
         self.direction_x = 1
         self.direction_y = -1
@@ -92,8 +96,10 @@ class game_ball():
         self.check_collisions(paddle.rect,wall.all_blocks)
         if self.rect.x < 0 or self.rect.x > (WINDOW_WIDTH - self.ball.get_width()):
             self.direction_x = -self.direction_x
-        if self.rect.y < 0 or self.rect.y > (WINDOW_HEIGHT - self.ball.get_height()):
+        if self.rect.y < 0:
             self.direction_y = -self.direction_y
+        if self.rect.y > (WINDOW_HEIGHT - self.ball.get_height()):
+            ball_is_alive = False
         self.rect.x += self.direction_x * self.speed
         self.rect.y += self.direction_y * self.speed
     
@@ -101,26 +107,37 @@ class game_ball():
         game_window.blit(self.ball, self.rect)
         
     def check_collisions(self, paddle, blocks):
-        if self.rect.colliderect(paddle):
-            self.direction_y = -self.direction_y
-            #self.rect.y += self.direction_y * self.speed
         collision_limit = 6
+        if self.rect.colliderect(paddle):
+            #check whether collision is from above, right or left
+            if abs(self.rect.bottom - paddle.top) < collision_limit:
+                self.direction_y = -self.direction_y
+            if abs(self.rect.left - paddle.right) < collision_limit:
+                self.direction_x = -self.direction_x
+            if abs(self.rect.right - paddle.left) < collision_limit:
+                self.direction_x = -self.direction_x
+
         for row in blocks:
             for block in row:
+                multiple_collision = True # variable to manage edge collisions
                 if self.rect.colliderect(block[0]):
                     #detect from which direction the ball hits the brick
-                    if abs(self.rect.top - block[0].bottom) < collision_limit:
+                    if abs(self.rect.top - block[0].bottom) < collision_limit and multiple_collision:
                         self.direction_y = -self.direction_y
-                    if abs(self.rect.bottom - block[0].top) < collision_limit:
+                        multiple_collision = False
+                    if abs(self.rect.bottom - block[0].top) < collision_limit and multiple_collision:
                         self.direction_y = -self.direction_y
-                    if abs(self.rect.left - block[0].right) < collision_limit:
+                        multiple_collision = False
+                    if abs(self.rect.left - block[0].right) < collision_limit and multiple_collision:
                         self.direction_x = -self.direction_x
-                    if abs(self.rect.right - block[0].left) < collision_limit:
+                        multiple_collision = False
+                    if abs(self.rect.right - block[0].left) < collision_limit and multiple_collision:
                         self.direction_x = -self.direction_x
+                        multiple_collision = False
                     #decrement block's lives
                     if block[1] > 1:
                         block[1] -= 1
-                    if block[1] == 1:
+                    else:
                         block[0] = (0,0,0,0)
         
 
@@ -137,18 +154,27 @@ ball = game_ball(int(WINDOW_WIDTH/2),paddle.rect.top)
 
 game_running = True
 while game_running:
+
+    #draw objects    
     game_window.fill(background)
     wall.draw_wall()
     paddle.draw()
-    paddle.move()
     ball.draw()
-    ball.move()
+
+    if ball_is_alive:
+        paddle.move()
+        ball.move()
+
     update()
     # Loop through all active events
     for event in pygame.event.get():
         # Handle closure
         if event.type == pygame.QUIT:
             game_running = False
+        if event.type == pygame.KEYDOWN and ball_is_alive == False:
+            if event.key == pygame.K_SPACE:
+                ball_is_alive = True
+                ball.reset(int(WINDOW_WIDTH/2),paddle.rect.top)
     
     # Update display
 
