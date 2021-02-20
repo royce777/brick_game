@@ -1,23 +1,5 @@
 import pygame, sys
 
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
-
-pygame.init()
-
-background = (0,0,0)
-red = (255,0,0)
-yellow = (255,255,0)
-green = (0,128,0)
-
-game_window = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
-pygame.display.set_caption("Brick Smasher")
-
-FPS = 60
-columns = 8
-rows = 6
-ball_is_alive = False
-
 class brick_wall():
     def __init__(self):
         self.width = WINDOW_WIDTH // columns
@@ -56,12 +38,14 @@ class brick_wall():
 
 class paddle():
     def __init__(self):
+        self.reset()
+    def reset(self):
         self.paddle = pygame.image.load('images/bar.png')
-        self.paddle = pygame.transform.scale(self.paddle,(200,30))
+        self.paddle = pygame.transform.scale(self.paddle,(100,30))
         self.rect = self.paddle.get_rect()
         self.rect.x = int((WINDOW_WIDTH /2) - (self.paddle.get_width()/2))
         self.rect.y =  WINDOW_HEIGHT - (self.paddle.get_height() *2)
-        self.speed = 7
+        self.speed = 10
         self.direction = 0
     
     def move(self):
@@ -91,6 +75,7 @@ class game_ball():
         self.speed = 5
         self.direction_x = 1
         self.direction_y = -1
+        self.eliminated_blocks = 0
     
     def move(self):
         self.check_collisions(paddle.rect,wall.all_blocks)
@@ -99,9 +84,12 @@ class game_ball():
         if self.rect.y < 0:
             self.direction_y = -self.direction_y
         if self.rect.y > (WINDOW_HEIGHT - self.ball.get_height()):
-            ball_is_alive = False
+            return False
+        if self.eliminated_blocks == columns * rows:
+            return False
         self.rect.x += self.direction_x * self.speed
         self.rect.y += self.direction_y * self.speed
+        return True
     
     def draw(self):
         game_window.blit(self.ball, self.rect)
@@ -118,8 +106,8 @@ class game_ball():
                 self.direction_x = -self.direction_x
 
         for row in blocks:
+            multiple_collision = True # variable to manage edge collisions
             for block in row:
-                multiple_collision = True # variable to manage edge collisions
                 if self.rect.colliderect(block[0]):
                     #detect from which direction the ball hits the brick
                     if abs(self.rect.top - block[0].bottom) < collision_limit and multiple_collision:
@@ -139,12 +127,40 @@ class game_ball():
                         block[1] -= 1
                     else:
                         block[0] = (0,0,0,0)
+                        self.eliminated_blocks += 1
         
 
 
 def update():
     pygame.display.update()
     pygame.time.Clock().tick(FPS)
+
+
+
+
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+
+pygame.init()
+
+background = (0,0,0)
+red = (255,0,0)
+yellow = (255,255,0)
+green = (0,128,0)
+
+game_window = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
+pygame.display.set_caption("Brick Smasher")
+pygame.font.init() # you have to call this at the start, 
+                   # if you want to use this module.
+myfont = pygame.font.SysFont('Comic Sans MS', 30)
+textsurface = myfont.render('Press Space Bar to start !', False, (255, 255, 255))
+
+
+FPS = 60
+columns = 6
+rows = 5
+ball_is_alive = False
+
 
 wall = brick_wall()
 wall.create_wall()
@@ -161,9 +177,11 @@ while game_running:
     paddle.draw()
     ball.draw()
 
-    if ball_is_alive:
+    if ball_is_alive == True:
         paddle.move()
-        ball.move()
+        ball_is_alive = ball.move()
+    if not ball_is_alive:
+        game_window.blit(textsurface,(WINDOW_WIDTH/2 - textsurface.get_width()/2,WINDOW_HEIGHT/2))
 
     update()
     # Loop through all active events
@@ -175,7 +193,8 @@ while game_running:
             if event.key == pygame.K_SPACE:
                 ball_is_alive = True
                 ball.reset(int(WINDOW_WIDTH/2),paddle.rect.top)
-    
+                paddle.reset()
+                wall.create_wall()
     # Update display
 
 pygame.quit()
